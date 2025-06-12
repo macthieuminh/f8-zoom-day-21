@@ -162,7 +162,7 @@ console.log("\n")
 console.log("*****************************")
 console.log("\n")
 
-// map2
+// map2 (đã fix)
 Array.prototype.map2 = function (callback, thisArg) {
     let length = this.length,
         arr = []
@@ -170,8 +170,6 @@ Array.prototype.map2 = function (callback, thisArg) {
         if (i in this) {
             let value = callback.call(thisArg, this[i], i, this)
             arr.push(value)
-        } else {
-            arr[i] = undefined
         }
     }
     return arr
@@ -236,21 +234,28 @@ console.log("\n")
 console.log("*****************************")
 console.log("\n")
 
-// reduce2
+// reduce2(đã sửa)
 Array.prototype.reduce2 = function (callback, init) {
-    let length = this.length,
-        acc,
-        index
+    const length = this.length
+    let acc,
+        i = 0
+
     if (arguments.length >= 2) {
         acc = init
-        index = 0
     } else {
-        acc = this[0]
-        index = 1
+        while (i < length && !(i in this)) {
+            i++
+        }
+        if (i >= length) {
+            throw new TypeError("Mảng rỗng và không có giá trị khởi tạo")
+        }
+        acc = this[i++]
     }
 
-    for (let i = index; i < length; i++) {
-        acc = callback(acc, this[i], i, this)
+    for (i; i < length; i++) {
+        if (i in this) {
+            acc = callback.call(thisArg, acc, this[i], i, this)
+        }
     }
 
     return acc
@@ -284,22 +289,27 @@ console.log("\n")
 console.log("*****************************")
 console.log("\n")
 
-// slice2
+// slice2 (đã sửa)
 Array.prototype.slice2 = function (start, end) {
     let length = this.length,
         arr = []
-    if (arguments.length < 1) {
-        arr = [...this]
+    start = start === undefined ? 0 : start
+    end = end === undefined ? length : end
+    if (start >= length || start >= end) {
+        return arr
     }
-    if (arguments.length == 1) {
-        for (start; start < length; start++) {
-            arr = [...arr, this[start]]
-        }
+    if (start < 0) {
+        start = Math.max(length + start, 0)
+    } else {
+        start = Math.min(start, length)
     }
-    if (arguments.length >= 2) {
-        for (start; start < end; start++) {
-            arr = [...arr, this[start]]
-        }
+    if (end < 0) {
+        end = Math.max(length + end, 0)
+    } else {
+        end = Math.min(end, length)
+    }
+    for (let i = start; i < end; i++) {
+        arr.push(this[i])
     }
     return arr
 }
@@ -325,20 +335,36 @@ console.log("\n")
 console.log("*****************************")
 console.log("\n")
 
-// splice2
+// splice2 (đã sửa)
 Array.prototype.splice2 = function (start, deleteCount, ...strings) {
     let length = this.length,
         arr = []
 
     start = start === undefined ? 0 : start
-    deleteCount = deleteCount ?? length - start
-
-    for (start; start < deleteCount; start++) {
-        if (strings) {
-            arr = [...arr, this[start]]
+    deleteCount = deleteCount === undefined ? length - start : deleteCount
+    if (start < 0) {
+        start = Math.max(length + start, 0)
+    } else {
+        start = Math.min(start, length)
+    }
+    if (deleteCount === undefined) {
+        deleteCount = length - start
+    } else {
+        deleteCount = Math.max(0, Math.min(deleteCount, length - start))
+    }
+    for (let i = 0; i < deleteCount; i++) {
+        if (start + i < length) {
+            arr.push(this[start + i])
         }
     }
-
+    let cut = this.slice(start + deleteCount)
+    this.length = start
+    for (let i = 0; i < strings.length; i++) {
+        this.push(strings[i])
+    }
+    for (let i = 0; i < cut.length; i++) {
+        this.push(cut[i])
+    }
     return arr
 }
 
